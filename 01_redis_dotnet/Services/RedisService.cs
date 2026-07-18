@@ -58,5 +58,57 @@ public class RedisService
         return db.KeyTimeToLive(key);
     }
 
+    #region Hash
+    public void setHash(string key, HashEntry[] hashEntries, TimeSpan expiry = default(TimeSpan))
+    {
+        var db = _redis.GetDatabase();
+
+        db.HashSet(key, hashEntries);
+        if (expiry != default(TimeSpan))
+        {
+            db.KeyExpire(key, expiry);
+        }
+    }
+
+    public HashEntry[] getHash(string key)
+    {
+        var db = _redis.GetDatabase();
+
+        return db.HashGetAll(key);
+    }
+
+    public HashEntry? getHashField(string key, string field)
+    {
+        var db = _redis.GetDatabase();
+
+        var value = db.HashGet(key, field);
+        if (value.IsNull)
+        {
+            return null;
+        }
+        return new HashEntry(field, value);
+    }
+
+    public bool deleteHashField(string key, string field)
+    {
+        var db = _redis.GetDatabase();
+
+        return db.HashDelete(key, field);
+    }
+    #endregion
+
+    #region List as a Queue
+    public long addJob(string key, string value)
+    {
+        var db = _redis.GetDatabase();
+        return db.ListLeftPush(key, value);
+    }
+
+    public string? getJob(string key)
+    {
+        var db = _redis.GetDatabase();
+        return db.ListRightPop(key);
+    }
+    #endregion
 
 }
